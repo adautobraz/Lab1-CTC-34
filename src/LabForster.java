@@ -4,13 +4,14 @@ import java.util.Stack;
 
 public class LabForster {
 	
-	static List<Noh> nohs = new ArrayList<Noh>();
+	List<Noh> nohs = new ArrayList<Noh>();
 	
 	public void getAFNDfromRegex(String regex){
-		// 1º passo
+		// 1ï¿½ passo
 		int indexNohs = 0;
 		Noh nohInicial = new Noh(indexNohs++);
 		Noh nohFinal = new Noh(indexNohs++);
+		nohFinal.setAceitacao();
 		nohInicial.addCaminho(nohFinal, regex);
 		nohs.add(nohInicial);
 		nohs.add(nohFinal);
@@ -27,7 +28,7 @@ public class LabForster {
 				String aresta = caminho.getArco();
 				//System.out.println(noh.getName() + "->" + caminho.getDestino().getName() + ": " + aresta);
 
-				//	2º passo - Quebra de Uniões
+				//	2ï¿½ passo - Quebra de Uniï¿½es
 				if(regexIsUnion(aresta)){
 					String lang1, lang2;
 					Noh nohDestino = caminho.getDestino();
@@ -39,7 +40,7 @@ public class LabForster {
 					noh.addCaminho(nohDestino, lang2);
 				}
 			
-				//3º passo - Conferir fecho de Kleene
+				//3ï¿½ passo - Conferir fecho de Kleene
 				else if(regexIsKleene(aresta)){
 					String arestaSemAsterisco = aresta.substring(0,aresta.length()-1);
 					Noh nohIntermediario = new Noh(indexNohs++);
@@ -51,13 +52,13 @@ public class LabForster {
 					nohs.add(nohIntermediario);
 				}
 				
-				//4º passo - remover parênteses, se houver
+				//4ï¿½ passo - remover parï¿½nteses, se houver
 				else if(regexIsInParenthesis(aresta)){
 					String novoArco = aresta.substring(1,aresta.length()-1);
 					caminho.changeArco(novoArco);
 				}	
 				
-				//5º passo - Quebra de Concatenações
+				//5ï¿½ passo - Quebra de Concatenaï¿½ï¿½es
 				else if (aresta.length() > 1){
 					String lang1, lang2;
 					Noh nohIntermediario = new Noh(indexNohs++);
@@ -88,6 +89,7 @@ public class LabForster {
 		for (int i=0; i < aresta.length();i++){
 			if(aresta.charAt(i) == ')'){
 				char topo = pilhaChar.pop();
+				pilhaIndex.pop();
 				while(topo!='(')
 				{
 					topo = pilhaChar.pop();
@@ -157,7 +159,7 @@ public class LabForster {
 			if(tamanho==2)
 				isKleene = true;
 			else if(aresta.charAt(tamanho-2)==')' && aresta.charAt(0)=='('  ){
-				System.out.println("entrou");
+				//System.out.println("entrou");
 				Stack<Character> pilhaChar = new Stack<Character>();
 				for (int i=1; i < aresta.length()-2;i++){
 					if(aresta.charAt(i) == '(')
@@ -226,12 +228,107 @@ public class LabForster {
 		return !pilhaChar.isEmpty();	
 	}
 	
-	public static void main(String[] args){
-		LabForster lab = new LabForster();	
-		 //Inserir aqui a expressão desejada
-		lab.getAFNDfromRegex("A*B*C*");
-		for(int i =0; i<nohs.size(); i++)
-			nohs.get(i).printCaminhos();
+	public void printEClosure(){
+	    int j=0;
+	    System.out.println("e-Closures:");
+	    while(j<nohs.size()){
+	        System.out.print(nohs.get(j).getName()+": ");
+	        int i=0;
+	        while(i<nohs.get(j).getEClosure().size()){
+	            System.out.print(nohs.get(j).getEClosure().get(i).getName() + " ;");
+	            i++;
+	        }
+	        System.out.print("\n");
+	        j++;
+	    }
+	}
 	
+	public void printAllCaminhos(){
+	   for(int i =0; i<nohs.size(); i++)
+			nohs.get(i).printCaminhos();
+	}
+	
+	public Noh getFirstNoh(){
+	    Noh result = new Noh(-1);
+	    for(int j=0;j<nohs.size();j++){
+	        if(nohs.get(j).getName()==0)
+	           result = nohs.get(j);
+	    }
+	    return result;
+	}
+	
+	public void printNohsList(List<Noh> lista){
+	    System.out.println("Estados Finais:");
+	    for(int j=0;j<lista.size();j++){
+	        System.out.print(lista.get(j).getName()+"; ");
+	    } 
+	    System.out.print("\n");
+	}
+	public void prettyPrintNohsList(List<Noh> lista){
+	    boolean aceita = false;
+	    System.out.print("Estados Finais: ");
+	    List<Integer> numberList = new ArrayList<Integer>();
+	    for(int j=0;j<lista.size();j++){
+	        if(!numberList.contains(lista.get(j).getName()))
+    	        numberList.add(lista.get(j).getName());
+    	    if(lista.get(j).isAceitacao())
+    	       aceita = true;
+	    } 
+	    for(int j=0;j<numberList.size();j++){
+	        System.out.print(numberList.get(j)+"; ");
+	    } 
+	    if(aceita)
+	       System.out.print(" -> Cadeia Aceita!\n");
+	    else
+	       System.out.print(" -> Cadeia NÃ£o Aceita!\n");
+	       
+	    
+	}
+	
+	public void doAllTests(){
+        System.out.println("Test: ab :");
+        prettyPrintNohsList(getFirstNoh().testString("ab"));
+        System.out.println("Test: abb :");
+        prettyPrintNohsList(getFirstNoh().testString("abb"));
+        System.out.println("Test: bba :");
+        prettyPrintNohsList(getFirstNoh().testString("bba"));
+        System.out.println("Test: abba :");
+        prettyPrintNohsList(getFirstNoh().testString("abba"));
+	}
+	
+	public static void main(String[] args){
+		LabForster ex1 = new LabForster();
+		System.out.println("\nRegex: ab+(b+c)*");
+		ex1.getAFNDfromRegex("ab+(b+c)*");
+        ex1.printAllCaminhos();
+		//ex1.printEClosure();
+		// Teste 1
+		LabForster bat1 = new LabForster();
+		System.out.println("\nRegex: (a+b)*bb(b+a)*");
+		bat1.getAFNDfromRegex("(a+b)*bb(b+a)*");
+        bat1.printAllCaminhos();
+        bat1.doAllTests();
+		//bat1.printEClosure();	
+		// Teste 2
+		LabForster bat2 = new LabForster();
+		System.out.println("\nRegex: (a(b+c))*");
+		bat2.getAFNDfromRegex("(a(b+c))*");
+        bat2.printAllCaminhos();
+        bat2.doAllTests();
+		//bat2.printEClosure();	
+		// Teste 3
+		LabForster bat3 = new LabForster();
+		System.out.println("\nRegex: a*b+b*a");
+		bat3.getAFNDfromRegex("a*b+b*a");
+        bat3.printAllCaminhos();
+        bat3.doAllTests();
+		//bat3.printEClosure();	
+		// Teste 4
+		LabForster bat4 = new LabForster();
+		System.out.println("\nRegex: a*b*c*");
+		bat4.getAFNDfromRegex("a*b*c*");
+        bat4.printAllCaminhos();
+        bat4.doAllTests();
+		//bat4.printEClosure();	
 	}
 }
